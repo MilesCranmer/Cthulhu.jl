@@ -62,6 +62,13 @@ end
 CC.get_world_counter(interp::CthulhuInterpreter) = get_world_counter(interp.native)
 CC.get_inference_cache(interp::CthulhuInterpreter) = get_inference_cache(interp.native)
 
+struct CthulhuCacheToken
+    native::Any
+end
+@static if isdefined(CC, :cache_owner)
+    CC.cache_owner(interp::CthulhuInterpreter) = CthulhuCacheToken(CC.cache_owner(interp.native))
+end
+
 # No need to do any locking since we're not putting our results into the runtime cache
 CC.lock_mi_inference(interp::CthulhuInterpreter, mi::MethodInstance) = nothing
 CC.unlock_mi_inference(interp::CthulhuInterpreter, mi::MethodInstance) = nothing
@@ -69,6 +76,8 @@ CC.method_table(interp::CthulhuInterpreter) = method_table(interp.native)
 struct CthulhuCache
     cache::Dict{MethodInstance, CodeInstance}
 end
+
+# TODO: Should Cthulhu use the new InternalCodeCache?
 
 CC.code_cache(interp::CthulhuInterpreter) = WorldView(CthulhuCache(interp.opt), WorldRange(get_world_counter(interp)))
 CC.get(wvc::WorldView{CthulhuCache}, mi::MethodInstance, default) = get(wvc.cache.cache, mi, default)
